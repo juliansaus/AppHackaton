@@ -8,13 +8,17 @@
 import UIKit
 
 class ViewController: UIViewController {
+    var selectedButton: UIButton?
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         setupUI()
     }
     
     func setupUI() {
-        view.backgroundColor = .white
+        view.backgroundColor = UIColor { traitCollection in
+            return traitCollection.userInterfaceStyle == .dark ? .black : .white
+        }
         
         let scrollView = UIScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
@@ -40,8 +44,8 @@ class ViewController: UIViewController {
         ])
         
         let titleLabel = UILabel()
-        titleLabel.text = "Grutas de Tolantongo"
-        titleLabel.font = UIFont.systemFont(ofSize: 30, weight: .medium)
+        titleLabel.text = "Ruta de los Cenotes"
+        titleLabel.font = UIFont.systemFont(ofSize: 28, weight: .medium)
         titleLabel.numberOfLines = 2
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(titleLabel)
@@ -53,11 +57,18 @@ class ViewController: UIViewController {
         buttonStack.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(buttonStack)
         
-        for _ in 0..<3 {
+        let topBarIcons = ["Weather", "Clock", "Pin"]
+        
+        for i in 0..<3 {
             let smallButton = UIButton(type: .system)
-            smallButton.backgroundColor = .systemBlue
-            smallButton.layer.cornerRadius = 15
             buttonStack.addArrangedSubview(smallButton)
+            if let image = UIImage(named: topBarIcons[i])?.withRenderingMode(.alwaysTemplate) {
+                smallButton.setImage(image, for: .normal)
+                smallButton.tintColor = UIColor { traitCollection in
+                    return traitCollection.userInterfaceStyle == .dark ? .white : .black
+                }
+            }
+
         }
         
         NSLayoutConstraint.activate([
@@ -107,54 +118,167 @@ class ViewController: UIViewController {
             firstRowStack.addArrangedSubview(squareButton)
         }
         
-        let buttonColors: [UIColor] = [.systemYellow, .systemGreen, .systemCyan, .systemBlue, .systemOrange, .systemPurple, .systemPink]
+        let moreInfoButton = UIButton(type: .system)
+        moreInfoButton.setTitle("   Más sobre la ruta                                                 >", for: .normal)
+        moreInfoButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        moreInfoButton.layer.borderWidth = 1
+        moreInfoButton.layer.cornerRadius = 15
+        moreInfoButton.layer.borderColor = UIColor { traitCollection in
+            return traitCollection.userInterfaceStyle == .dark ? .white : .black
+        }.cgColor
+        moreInfoButton.contentHorizontalAlignment = .left
+        moreInfoButton.tintColor = UIColor { traitCollection in
+            return traitCollection.userInterfaceStyle == .dark ? .white : .black
+        }
+        verticalStack.addArrangedSubview(moreInfoButton)
+
+        let buttonColors: [UIColor] = [.systemYellow, .systemGreen, .systemBlue, .systemOrange, .systemCyan, .systemPurple, .systemPink]
         
-        for i in 0..<7 {
+        func createCustomButton(title: String, lines: [String], color: UIColor) -> UIButton {
             let button = UIButton(type: .system)
-            button.backgroundColor = buttonColors[i]
-            button.heightAnchor.constraint(equalToConstant: 135).isActive = true
+            button.backgroundColor = color
             button.layer.cornerRadius = 15
-            verticalStack.addArrangedSubview(button)
+            button.layer.borderWidth = 1
+
+            let stackView = UIStackView()
+            stackView.axis = .vertical
+            stackView.spacing = 5
+            stackView.translatesAutoresizingMaskIntoConstraints = false
+
+            // 🏷️ Título
+            let titleLabel = UILabel()
+            titleLabel.text = title
+            titleLabel.font = UIFont.boldSystemFont(ofSize: 20)
+            titleLabel.textAlignment = .left
+            stackView.addArrangedSubview(titleLabel)
+            
+            let titleSeparator = UIView()
+            titleSeparator.backgroundColor = UIColor.systemGray6
+                titleSeparator.heightAnchor.constraint(equalToConstant: 1).isActive = true
+                stackView.addArrangedSubview(titleSeparator)
+
+            // 🔽 Líneas de texto con separadores
+            for (index, lineText) in lines.enumerated() {
+                let lineLabel = UILabel()
+                lineLabel.text = lineText
+                lineLabel.font = UIFont.systemFont(ofSize: 14)
+                lineLabel.textAlignment = .left
+                stackView.addArrangedSubview(lineLabel)
+
+                // Agregar línea divisoria, excepto después del último renglón
+                if index < lines.count - 1 {
+                    let separator = UIView()
+                    separator.backgroundColor = UIColor.systemGray6
+                    separator.heightAnchor.constraint(equalToConstant: 1).isActive = true
+                    stackView.addArrangedSubview(separator)
+                }
+                
+            }
+            
+            // 🔘 Botón pequeño con "+"
+            let addButton = UIButton(type: .system)
+            addButton.setTitle("+", for: .normal)
+            addButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 30)
+            addButton.setTitleColor(.white, for: .normal)
+            addButton.backgroundColor = .systemTeal
+            addButton.layer.cornerRadius = 15  // Hace el botón redondo
+            addButton.translatesAutoresizingMaskIntoConstraints = false
+
+            button.addSubview(stackView)
+            button.addSubview(addButton)
+
+            // 📏 Constraints para que el texto se acomode dentro del botón
+            NSLayoutConstraint.activate([
+                stackView.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 10),
+                stackView.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -10),
+                stackView.topAnchor.constraint(equalTo: button.topAnchor, constant: 10),
+                stackView.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -10),
+                
+                addButton.widthAnchor.constraint(equalToConstant: 30),
+                addButton.heightAnchor.constraint(equalToConstant: 30),
+                addButton.centerXAnchor.constraint(equalTo: button.centerXAnchor),
+                addButton.bottomAnchor.constraint(equalTo: button.bottomAnchor, constant: -1.5)
+            ])
+
+            return button
+        }
+
+        // 📌 En tu `setupUI()`, reemplaza el ciclo for dentro de `verticalStack`:
+        let buttonData: [(String, [String])] = [
+            ("Zonas arqueológicas", ["Cenote azul", "Ek Balam", "Coba"," "]),
+            ("Actividades extremas", ["Buceo en cavernas", "Tirolesa", "Rappel"," "]),
+            ("Cultura", ["Museos", "Eventos culturales y festivales", "Visitas a pueblos mágicos"," "]),
+            ("Transporte", ["Renta de auto", "Taxi", "Avión"," "]),
+            ("Hospedaje", ["Coqui Coqui Tulum", "El Mesón del Marqués", "Costa Maya Inn"," "]),
+            ("Tiendas", ["Plaza La Perla", "Mercado Artesanal de Mahahual", "Galería Tulum"," "]),
+            ("Comida", ["La Habichuela", "Sale e Pepe", "El Naranjo"," "])
+        ]
+
+        // 🔄 Crear botones y agregarlos a `verticalStack`
+        for (i, data) in buttonData.enumerated() {
+            let buttonColor = buttonColors[i % buttonColors.count]
+            let customButton = createCustomButton(title: data.0, lines: data.1, color: buttonColor)
+            customButton.heightAnchor.constraint(equalToConstant: 160).isActive = true
+            verticalStack.addArrangedSubview(customButton)
         }
         
         let bottomBar = UIView()
-                bottomBar.backgroundColor = .systemRed
-                bottomBar.translatesAutoresizingMaskIntoConstraints = false
-                view.addSubview(bottomBar)
-                
-                NSLayoutConstraint.activate([
-                    bottomBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-                    bottomBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-                    bottomBar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-                    bottomBar.heightAnchor.constraint(equalToConstant: 90)
-                ])
-                
-                let bottomStack = UIStackView()
-                bottomStack.axis = .horizontal
-                bottomStack.spacing = 40
-                bottomStack.distribution = .fillEqually
-                bottomStack.translatesAutoresizingMaskIntoConstraints = false
-                bottomBar.addSubview(bottomStack)
-                
-                NSLayoutConstraint.activate([
-                    bottomStack.leadingAnchor.constraint(equalTo: bottomBar.leadingAnchor, constant: 30),
-                    bottomStack.trailingAnchor.constraint(equalTo: bottomBar.trailingAnchor, constant: -30),
-                    bottomStack.topAnchor.constraint(equalTo: bottomBar.topAnchor, constant: 15),
-                    bottomStack.bottomAnchor.constraint(equalTo: bottomBar.bottomAnchor, constant: -25)
+        bottomBar.backgroundColor = .systemRed
+        bottomBar.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(bottomBar)
 
-                ])
+        NSLayoutConstraint.activate([
+            bottomBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            bottomBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            bottomBar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            bottomBar.heightAnchor.constraint(equalToConstant: 90)
+        ])
+
+        let bottomStack = UIStackView()
+        bottomStack.axis = .horizontal
+        bottomStack.spacing = 40
+        bottomStack.distribution = .fillEqually
+        bottomStack.translatesAutoresizingMaskIntoConstraints = false
+        bottomBar.addSubview(bottomStack)
+
+        NSLayoutConstraint.activate([
+            bottomStack.leadingAnchor.constraint(equalTo: bottomBar.leadingAnchor, constant: 30),
+            bottomStack.trailingAnchor.constraint(equalTo: bottomBar.trailingAnchor, constant: -30),
+            bottomStack.topAnchor.constraint(equalTo: bottomBar.topAnchor, constant: 15),
+            bottomStack.bottomAnchor.constraint(equalTo: bottomBar.bottomAnchor, constant: -25)
+        ])
+
+        let bottomBarIcons = ["Lines", "Home", "Brochure", "Gear"]
+                
+        for i in 0..<4 {
+            let bottomButton = UIButton(type: .system)
+
+            if let image = UIImage(named: bottomBarIcons[i])?.withRenderingMode(.alwaysTemplate) {
+                bottomButton.setImage(image, for: .normal)
+                bottomButton.tintColor = .black // Color inicial
+            }
+
+            bottomButton.tag = i
+            bottomButton.addTarget(self, action: #selector(bottomButtonTapped(_:)), for: .touchUpInside)
+            bottomStack.addArrangedSubview(bottomButton)
+
+            // Seleccionamos el primer botón por defecto
+            if i == 0 {
+                bottomButton.tintColor = .white
+                selectedButton = bottomButton
+            }
+        }
+    }
+
+    @objc func bottomButtonTapped(_ sender: UIButton) {
+        // Restaurar color de todos los botones
+        selectedButton?.tintColor = .black
+
+        // Marcar el botón tocado como seleccionado
+        sender.tintColor = .white
+        selectedButton = sender
         
-                let bottomBarIcons = ["Lines", "Home", "Brochure", "Gear"]
-                                
-                for i in 0..<4 {
-                    let bottomButton = UIButton(type: .system)
-                    //bottomButton.backgroundColor = .black
-                    if let image = UIImage(named: bottomBarIcons[i])?.withRenderingMode(.alwaysOriginal) {
-                        bottomButton.setImage(image, for: .normal)
-                    }
-                    bottomButton.layer.cornerRadius = 15
-                    bottomStack.addArrangedSubview(bottomButton)
-                }
+        
     }
 }
 
